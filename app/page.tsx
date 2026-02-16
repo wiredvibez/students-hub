@@ -12,6 +12,7 @@ function HomePage() {
   const router = useRouter();
   const { profile, signOut } = useAuth();
   const [questionCount, setQuestionCount] = useState<number | null>(null);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   useEffect(() => {
     getQuestionCount().then(setQuestionCount).catch(() => setQuestionCount(0));
@@ -40,9 +41,11 @@ function HomePage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col md:flex-row items-center md:items-stretch justify-center px-4 py-12 gap-8 md:gap-12 md:px-12 lg:px-20">
+      <div className={`flex-1 flex flex-col items-center justify-center px-4 py-12 gap-8 ${
+        showLeaderboard ? "md:flex-row md:items-stretch md:gap-12 md:px-12 lg:px-20" : ""
+      }`}>
         {/* Hero */}
-        <div className="flex flex-col items-center justify-center md:flex-1">
+        <div className={`flex flex-col items-center justify-center ${showLeaderboard ? "md:flex-1" : ""}`}>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -90,27 +93,38 @@ function HomePage() {
           </motion.button>
         </div>
 
-        {/* Decorative line - mobile only */}
-        <div className="w-full max-w-md flex items-center gap-4 md:hidden">
-          <div className="flex-1 h-[3px] bg-brutal-black" />
-          <span className="font-display text-sm text-brutal-grey">
-            לוח תוצאות
-          </span>
-          <div className="flex-1 h-[3px] bg-brutal-black" />
-        </div>
+        {showLeaderboard && (
+          <>
+            {/* Decorative line - mobile only */}
+            <div className="w-full max-w-md flex items-center gap-4 md:hidden">
+              <div className="flex-1 h-[3px] bg-brutal-black" />
+              <span className="font-display text-sm text-brutal-grey">
+                לוח תוצאות
+              </span>
+              <div className="flex-1 h-[3px] bg-brutal-black" />
+            </div>
 
-        {/* Vertical divider - desktop only */}
-        <div className="hidden md:block w-[3px] bg-brutal-black self-stretch" />
+            {/* Vertical divider - desktop only */}
+            <div className="hidden md:block w-[3px] bg-brutal-black self-stretch" />
 
-        {/* Leaderboard */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="w-full max-w-md md:flex-1 md:max-w-none md:flex md:flex-col md:justify-center"
-        >
-          <Leaderboard />
-        </motion.div>
+            {/* Leaderboard */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+              className="w-full max-w-md md:flex-1 md:max-w-none md:flex md:flex-col md:justify-center"
+            >
+              <Leaderboard onVisibilityChange={setShowLeaderboard} />
+            </motion.div>
+          </>
+        )}
+
+        {/* Hidden mount for leaderboard data fetch when not yet visible */}
+        {!showLeaderboard && (
+          <div className="hidden">
+            <Leaderboard onVisibilityChange={setShowLeaderboard} />
+          </div>
+        )}
       </div>
 
       {/* Footer */}

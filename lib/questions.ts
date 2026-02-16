@@ -84,39 +84,32 @@ export async function getNextBatch(
 }
 
 /**
- * Save a batch of answers after review.
- * Updates: user's answers subcollection, question stats, user stats.
+ * Save a single answer immediately when the user submits it.
+ * Atomic batch: answer doc + question timesAnswered + user stats.
  */
-export async function saveBatchAnswers(
+export async function saveAnswer(
   uid: string,
-  answers: UserAnswerLocal[]
+  answer: UserAnswerLocal
 ): Promise<void> {
   const db = getAppDb();
   const batch = writeBatch(db);
 
-  let correctCount = 0;
+  const answerRef = doc(collection(db, "users", uid, "answers"));
+  batch.set(answerRef, {
+    questionId: answer.questionId,
+    userAnswer: answer.userAnswer,
+    isCorrect: answer.isCorrect,
+    startTime: Timestamp.fromDate(answer.startTime),
+    submitTime: Timestamp.fromDate(answer.submitTime),
+  });
 
-  for (const answer of answers) {
-    const answerRef = doc(collection(db, "users", uid, "answers"));
-    batch.set(answerRef, {
-      questionId: answer.questionId,
-      userAnswer: answer.userAnswer,
-      isCorrect: answer.isCorrect,
-      startTime: Timestamp.fromDate(answer.startTime),
-      submitTime: Timestamp.fromDate(answer.submitTime),
-      rating: answer.rating || null,
-    });
-
-    const qRef = doc(db, "questions", answer.questionId);
-    batch.update(qRef, { timesAnswered: increment(1) });
-
-    if (answer.isCorrect) correctCount++;
-  }
+  const qRef = doc(db, "questions", answer.questionId);
+  batch.update(qRef, { timesAnswered: increment(1) });
 
   const userRef = doc(db, "users", uid);
   batch.update(userRef, {
-    totalAnswered: increment(answers.length),
-    totalCorrect: increment(correctCount),
+    totalAnswered: increment(1),
+    totalCorrect: increment(answer.isCorrect ? 1 : 0),
   });
 
   await batch.commit();

@@ -6,13 +6,13 @@ import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "@/lib/auth-context";
 import AuthGuard from "@/components/AuthGuard";
 import ReviewCard from "@/components/ReviewCard";
-import { getNextBatch, saveBatchAnswers, rateQuestion } from "@/lib/questions";
+import { getNextBatch, saveAnswer, rateQuestion } from "@/lib/questions";
 import type { Question, UserAnswerLocal } from "@/lib/types";
 
 const LETTERS = ["א", "ב", "ג", "ד", "ה", "ו", "ז", "ח"];
 const BATCH_SIZE = 20;
 
-type TestState = "loading" | "testing" | "review" | "saving";
+type TestState = "loading" | "testing" | "review";
 
 function TestPage() {
   const router = useRouter();
@@ -24,7 +24,6 @@ function TestPage() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [questionStartTime, setQuestionStartTime] = useState<Date>(new Date());
   const [testState, setTestState] = useState<TestState>("loading");
-  const [saving, setSaving] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
 
   const loadBatch = useCallback(async () => {
@@ -53,7 +52,7 @@ function TestPage() {
   }, [loadBatch]);
 
   const handleSubmitAnswer = () => {
-    if (selectedOption === null) return;
+    if (selectedOption === null || !user) return;
 
     const question = questions[currentIndex];
     const now = new Date();
@@ -69,6 +68,9 @@ function TestPage() {
     const newAnswers = [...answers];
     newAnswers[currentIndex] = answer;
     setAnswers(newAnswers);
+
+    // Persist immediately — fire-and-forget so the UI stays snappy
+    saveAnswer(user.uid, answer).catch(console.error);
 
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -90,30 +92,15 @@ function TestPage() {
     }
   };
 
-  const handleSaveAndContinue = async (goHome: boolean) => {
-    if (!user || saving) return;
-    setSaving(true);
-    setTestState("saving");
-
-    try {
-      const validAnswers = answers.filter(
-        (a): a is UserAnswerLocal => a !== null
-      );
-      await saveBatchAnswers(user.uid, validAnswers);
-
-      if (goHome) {
-        router.push("/");
-      } else {
-        await loadBatch();
-      }
-    } catch (err) {
-      console.error("Failed to save:", err);
-    } finally {
-      setSaving(false);
+  const handleContinue = (goHome: boolean) => {
+    if (goHome) {
+      router.push("/");
+    } else {
+      loadBatch();
     }
   };
 
-  if (testState === "loading" || testState === "saving") {
+  if (testState === "loading") {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center bg-brutal-paper gap-4">
         <motion.div
@@ -121,9 +108,7 @@ function TestPage() {
           transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
           className="w-12 h-12 border-3 border-brutal-black border-t-brutal-red"
         />
-        <p className="font-bold text-brutal-grey">
-          {testState === "saving" ? "שומר תוצאות..." : "טוען שאלות..."}
-        </p>
+        <p className="font-bold text-brutal-grey">טוען שאלות...</p>
       </div>
     );
   }
@@ -228,15 +213,13 @@ function TestPage() {
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t-3 border-brutal-black px-3 py-2">
           <div className="max-w-lg mx-auto flex gap-2">
             <button
-              onClick={() => handleSaveAndContinue(true)}
-              disabled={saving}
+              onClick={() => handleContinue(true)}
               className="brutal-btn flex-1 text-sm"
             >
               חזור לדף הראשי
             </button>
             <button
-              onClick={() => handleSaveAndContinue(false)}
-              disabled={saving}
+              onClick={() => handleContinue(false)}
               className="brutal-btn-red flex-1 text-sm"
             >
               המשך לעוד {BATCH_SIZE}

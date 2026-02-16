@@ -5,7 +5,13 @@ import { motion } from "motion/react";
 import { fetchLeaderboard } from "@/lib/questions";
 import type { LeaderboardEntry } from "@/lib/types";
 
-export default function Leaderboard() {
+const MIN_ENTRIES = 3;
+
+interface LeaderboardProps {
+  onVisibilityChange?: (visible: boolean) => void;
+}
+
+export default function Leaderboard({ onVisibilityChange }: LeaderboardProps) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,31 +21,13 @@ export default function Leaderboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return (
-      <div className="brutal-card p-6">
-        <div className="h-4 w-32 bg-brutal-lightGrey animate-pulse mb-4" />
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-10 bg-brutal-lightGrey animate-pulse"
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const visible = !loading && entries.length >= MIN_ENTRIES;
 
-  if (entries.length === 0) {
-    return (
-      <div className="brutal-card p-6 text-center">
-        <p className="text-brutal-grey text-sm">
-          עדיין אין נתונים — תהיו הראשונים!
-        </p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    onVisibilityChange?.(visible);
+  }, [visible, onVisibilityChange]);
+
+  if (!visible) return null;
 
   return (
     <div className="brutal-card overflow-hidden">
