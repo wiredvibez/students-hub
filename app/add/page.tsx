@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "@/lib/auth-context";
 import AuthGuard from "@/components/AuthGuard";
 import { addQuestionsBatch } from "@/lib/questions";
+import { getAppAuth } from "@/lib/firebase";
 
 const LETTERS = ["א", "ב", "ג", "ד", "ה", "ו", "ז", "ח"];
 
@@ -16,9 +17,15 @@ interface QuestionDraft {
 }
 
 async function generateWithAI(prompt: string): Promise<QuestionDraft[]> {
+  const token = await getAppAuth().currentUser?.getIdToken();
+  if (!token) throw new Error("יש להתחבר מחדש");
+
   const res = await fetch("/api/openai", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify({ prompt }),
   });
   if (!res.ok) throw new Error("שגיאה ביצירת השאלות");
@@ -36,7 +43,10 @@ async function generateWithAI(prompt: string): Promise<QuestionDraft[]> {
         q.question &&
         Array.isArray(q.options) &&
         q.options.length >= 2 &&
+        q.options.every((o) => typeof o === "string" && o.trim().length > 0) &&
         typeof q.correctAnswerIndex === "number" &&
+        Number.isInteger(q.correctAnswerIndex) &&
+        q.correctAnswerIndex >= 0 &&
         q.correctAnswerIndex < q.options.length
     );
   } catch {

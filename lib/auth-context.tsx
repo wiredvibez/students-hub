@@ -56,7 +56,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
-    await signInWithPopup(getAppAuth(), googleProvider);
+    try {
+      await signInWithPopup(getAppAuth(), googleProvider);
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code;
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        return; // user cancelled — not an error
+      }
+      console.error("Sign-in failed:", err);
+    }
   };
 
   const signOut = async () => {
@@ -66,16 +74,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setDisplayName = async (name: string) => {
     if (!user) return;
-    const profileData: UserProfile = {
+    const userDocRef = doc(getAppDb(), "users", user.uid);
+    await setDoc(userDocRef, {
       uid: user.uid,
       displayName: name,
       email: user.email || "",
-      createdAt: serverTimestamp() as never,
+      createdAt: serverTimestamp(),
       totalAnswered: 0,
       totalCorrect: 0,
-    };
-    await setDoc(doc(getAppDb(), "users", user.uid), profileData);
-    setProfile(profileData);
+    });
+    const freshDoc = await getDoc(userDocRef);
+    setProfile(freshDoc.data() as UserProfile);
     setNeedsDisplayName(false);
   };
 

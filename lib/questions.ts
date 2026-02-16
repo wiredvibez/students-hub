@@ -7,10 +7,10 @@ import {
   addDoc,
   updateDoc,
   writeBatch,
+  runTransaction,
   serverTimestamp,
   Timestamp,
   increment,
-  arrayUnion
 } from "firebase/firestore";
 import { getAppDb } from "./firebase";
 import type { Question, UserAnswerLocal, LeaderboardEntry } from "./types";
@@ -62,7 +62,8 @@ export async function getUserAnsweredIds(uid: string): Promise<Set<string>> {
 
 /**
  * Get the next batch of questions for a user.
- * Priority: unanswered (high rating first), then answered (high rating first).
+ * Picks a random sample from unanswered questions first,
+ * falling back to answered ones only if unanswered aren't enough.
  */
 export async function getNextBatch(
   uid: string,
@@ -73,14 +74,20 @@ export async function getNextBatch(
     getUserAnsweredIds(uid),
   ]);
 
-  const unanswered = allQuestions.filter((q) => !answeredIds.has(q.id));
-  const answered = allQuestions.filter((q) => answeredIds.has(q.id));
-
-  unanswered.sort((a, b) => b.avgRating - a.avgRating);
-  answered.sort((a, b) => b.avgRating - a.avgRating);
+  const unanswered = shuffle(allQuestions.filter((q) => !answeredIds.has(q.id)));
+  const answered = shuffle(allQuestions.filter((q) => answeredIds.has(q.id)));
 
   const combined = [...unanswered, ...answered];
   return combined.slice(0, batchSize);
+}
+
+/** Fisher-Yates shuffle (in-place, returns the same array). */
+function shuffle<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
 
 /**
@@ -117,7 +124,9 @@ export async function saveAnswer(
 
 /**
  * Rate a question immediately (fire-and-forget from the UI).
- * Appends the rating and recalculates the average.
+ * Uses a transaction to atomically append the rating and recalculate the average.
+ * (arrayUnion cannot be used here because it deduplicates values —
+ *  two users rating "4" would only store one entry.)
  */
 export async function rateQuestion(
   questionId: string,
@@ -125,25 +134,20 @@ export async function rateQuestion(
 ): Promise<void> {
   const db = getAppDb();
   const qRef = doc(db, "questions", questionId);
-  await updateDoc(qRef, { ratings: arrayUnion(rating) });
-  await recalcAvgRating(questionId);
-}
 
-/**
- * Recalculate avgRating for a question from its ratings array.
- */
-async function recalcAvgRating(questionId: string): Promise<void> {
-  const db = getAppDb();
-  const qRef = doc(db, "questions", questionId);
-  const qSnap = await getDoc(qRef);
-  if (!qSnap.exists()) return;
+  await runTransaction(db, async (tx) => {
+    const qSnap = await tx.get(qRef);
+    if (!qSnap.exists()) return;
 
-  const data = qSnap.data();
-  const ratings: number[] = data.ratings || [];
-  if (ratings.length === 0) return;
+    const data = qSnap.data();
+    const ratings: number[] = [...(data.ratings || []), rating];
+    const avg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
 
-  const avg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
-  await updateDoc(qRef, { avgRating: Math.round(avg * 10) / 10 });
+    tx.update(qRef, {
+      ratings,
+      avgRating: Math.round(avg * 10) / 10,
+    });
+  });
 }
 
 /**

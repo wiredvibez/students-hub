@@ -25,6 +25,7 @@ function TestPage() {
   const [questionStartTime, setQuestionStartTime] = useState<Date>(new Date());
   const [testState, setTestState] = useState<TestState>("loading");
   const [showSplash, setShowSplash] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const loadBatch = useCallback(async () => {
     if (!user) return;
@@ -40,6 +41,7 @@ function TestPage() {
       setCurrentIndex(0);
       setSelectedOption(null);
       setQuestionStartTime(new Date());
+      setSubmitting(false);
       setTestState("testing");
     } catch (err) {
       console.error("Failed to load questions:", err);
@@ -52,7 +54,8 @@ function TestPage() {
   }, [loadBatch]);
 
   const handleSubmitAnswer = () => {
-    if (selectedOption === null || !user) return;
+    if (selectedOption === null || !user || submitting) return;
+    setSubmitting(true);
 
     const question = questions[currentIndex];
     const now = new Date();
@@ -76,6 +79,7 @@ function TestPage() {
       setCurrentIndex(currentIndex + 1);
       setSelectedOption(null);
       setQuestionStartTime(new Date());
+      setSubmitting(false);
     } else {
       setTestState("review");
       setShowSplash(true);
@@ -176,9 +180,9 @@ function TestPage() {
             <div className="flex items-center gap-1.5">
               <span
                 className={`font-black text-xl tabular-nums ${
-                  correctCount >= 15
+                  correctCount >= validAnswers.length * 0.75
                     ? "text-green-400"
-                    : correctCount >= 10
+                    : correctCount >= validAnswers.length * 0.5
                     ? "text-yellow-400"
                     : "text-brutal-red"
                 }`}

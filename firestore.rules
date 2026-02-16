@@ -22,8 +22,10 @@ service cloud.firestore {
       allow read: if request.auth != null;
       // Anyone authenticated can create questions
       allow create: if request.auth != null;
-      // Anyone authenticated can update (for ratings and timesAnswered)
-      allow update: if request.auth != null;
+      // Anyone authenticated can update only ratings, avgRating, and timesAnswered
+      allow update: if request.auth != null
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(["ratings", "avgRating", "timesAnswered"]);
     }
   }
 }

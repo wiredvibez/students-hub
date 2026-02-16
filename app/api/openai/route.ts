@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { verifyAuthHeader } from "@/lib/firebase-admin";
+
+const MAX_PROMPT_LENGTH = 30_000;
 
 const SYSTEM_PROMPT = `You are a question formatter for a university course called "התנהגות ארגונית מיקרו" (Micro Organizational Behavior).
 
@@ -25,11 +28,23 @@ Output ONLY a JSON array (no explanation, no markdown, no wrapping text). Exampl
 
 export async function POST(req: Request) {
   try {
+    const uid = await verifyAuthHeader(req.headers.get("Authorization"));
+    if (!uid) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { prompt } = await req.json();
 
     if (!prompt || typeof prompt !== "string") {
       return NextResponse.json(
         { error: "Missing prompt" },
+        { status: 400 }
+      );
+    }
+
+    if (prompt.length > MAX_PROMPT_LENGTH) {
+      return NextResponse.json(
+        { error: "Prompt too long" },
         { status: 400 }
       );
     }
