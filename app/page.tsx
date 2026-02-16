@@ -18,6 +18,11 @@ function HomePage() {
     getQuestionCount().then(setQuestionCount).catch(() => setQuestionCount(0));
   }, []);
 
+  const correctPct =
+    profile && profile.totalAnswered > 0
+      ? Math.round((profile.totalCorrect / profile.totalAnswered) * 100)
+      : null;
+
   return (
     <div className="min-h-dvh flex flex-col">
       {/* Top Bar */}
@@ -40,12 +45,53 @@ function HomePage() {
         </div>
       </div>
 
+      {/* User Stats */}
+      {profile && profile.totalAnswered > 0 && (
+        <div className="flex items-center justify-center gap-6 px-4 py-2.5 bg-brutal-black/[0.03] border-b-3 border-brutal-black">
+          <div className="flex items-center gap-1.5 text-sm">
+            <span className="font-black text-lg tabular-nums">
+              {profile.totalAnswered}
+            </span>
+            <span className="text-brutal-grey">שאלות נענו</span>
+          </div>
+          {correctPct !== null && (
+            <>
+              <div className="w-[2px] h-4 bg-brutal-black/20" />
+              <div className="flex items-center gap-1.5 text-sm">
+                <span
+                  className={`font-black text-lg tabular-nums ${
+                    correctPct >= 75
+                      ? "text-green-600"
+                      : correctPct >= 50
+                      ? "text-yellow-600"
+                      : "text-brutal-red"
+                  }`}
+                >
+                  {correctPct}%
+                </span>
+                <span className="text-brutal-grey">הצלחה</span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col items-center justify-center px-4 py-12 gap-8 ${
-        showLeaderboard ? "md:flex-row md:items-stretch md:gap-12 md:px-12 lg:px-20" : ""
-      }`}>
-        {/* Hero */}
-        <div className={`flex flex-col items-center justify-center ${showLeaderboard ? "md:flex-1" : ""}`}>
+      <div
+        className={`flex-1 flex flex-col items-center px-4 py-12 gap-8 ${
+          showLeaderboard
+            ? "md:flex-row md:items-start md:gap-12 md:px-12 lg:px-20"
+            : "justify-center"
+        }`}
+      >
+        {/* Hero — sticks to top on desktop when leaderboard is visible */}
+        <div
+          className={`flex flex-col items-center ${
+            showLeaderboard
+              ? "md:flex-1 md:sticky md:top-8 md:pt-4"
+              : "justify-center"
+          }`}
+        >
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -109,14 +155,17 @@ function HomePage() {
           <div className="hidden md:block w-[3px] bg-brutal-black self-stretch" />
         )}
 
-        {/* Single Leaderboard instance — always mounted so it never re-fetches */}
+        {/* Leaderboard */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: showLeaderboard ? 1 : 0, y: showLeaderboard ? 0 : 20 }}
+          animate={{
+            opacity: showLeaderboard ? 1 : 0,
+            y: showLeaderboard ? 0 : 20,
+          }}
           transition={{ delay: showLeaderboard ? 0.4 : 0, duration: 0.5 }}
           className={
             showLeaderboard
-              ? "w-full max-w-md md:flex-1 md:max-w-none md:flex md:flex-col md:justify-center"
+              ? "w-full max-w-md md:flex-1 md:max-w-none"
               : "hidden"
           }
         >

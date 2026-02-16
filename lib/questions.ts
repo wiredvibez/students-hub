@@ -11,6 +11,7 @@ import {
   serverTimestamp,
   Timestamp,
   increment,
+  onSnapshot,
 } from "firebase/firestore";
 import { getAppDb } from "./firebase";
 import type { Question, UserAnswerLocal, LeaderboardEntry } from "./types";
@@ -233,4 +234,30 @@ export async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
 
   entries.sort((a, b) => b.totalAnswered - a.totalAnswered);
   return entries;
+}
+
+/**
+ * Subscribe to live leaderboard updates via Firestore snapshots.
+ * Returns an unsubscribe function.
+ */
+export function subscribeLeaderboard(
+  callback: (entries: LeaderboardEntry[]) => void
+): () => void {
+  return onSnapshot(collection(getAppDb(), "users"), (snapshot) => {
+    const entries: LeaderboardEntry[] = [];
+
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (data.totalAnswered > 0) {
+        entries.push({
+          uid: docSnap.id,
+          displayName: data.displayName || "???",
+          totalAnswered: data.totalAnswered || 0,
+        });
+      }
+    });
+
+    entries.sort((a, b) => b.totalAnswered - a.totalAnswered);
+    callback(entries);
+  });
 }
