@@ -93,34 +93,43 @@ function shuffle<T>(arr: T[]): T[] {
 
 /**
  * Save a single answer immediately when the user submits it.
- * Atomic batch: answer doc + question timesAnswered + user stats.
+ * Uses a transaction to gracefully handle deleted questions:
+ * - Always saves the user's answer and updates their stats
+ * - Only increments question.timesAnswered if the question still exists
  */
 export async function saveAnswer(
   uid: string,
   answer: UserAnswerLocal
 ): Promise<void> {
   const db = getAppDb();
-  const batch = writeBatch(db);
-
-  const answerRef = doc(collection(db, "users", uid, "answers"));
-  batch.set(answerRef, {
-    questionId: answer.questionId,
-    userAnswer: answer.userAnswer,
-    isCorrect: answer.isCorrect,
-    startTime: Timestamp.fromDate(answer.startTime),
-    submitTime: Timestamp.fromDate(answer.submitTime),
-  });
-
   const qRef = doc(db, "questions", answer.questionId);
-  batch.update(qRef, { timesAnswered: increment(1) });
-
   const userRef = doc(db, "users", uid);
-  batch.update(userRef, {
-    totalAnswered: increment(1),
-    totalCorrect: increment(answer.isCorrect ? 1 : 0),
-  });
+  const answerRef = doc(collection(db, "users", uid, "answers"));
 
-  await batch.commit();
+  await runTransaction(db, async (tx) => {
+    // Check if question still exists
+    const qSnap = await tx.get(qRef);
+
+    // Always save the user's answer
+    tx.set(answerRef, {
+      questionId: answer.questionId,
+      userAnswer: answer.userAnswer,
+      isCorrect: answer.isCorrect,
+      startTime: Timestamp.fromDate(answer.startTime),
+      submitTime: Timestamp.fromDate(answer.submitTime),
+    });
+
+    // Always update user stats
+    tx.update(userRef, {
+      totalAnswered: increment(1),
+      totalCorrect: increment(answer.isCorrect ? 1 : 0),
+    });
+
+    // Only update question stats if it still exists
+    if (qSnap.exists()) {
+      tx.update(qRef, { timesAnswered: increment(1) });
+    }
+  });
 }
 
 /**
