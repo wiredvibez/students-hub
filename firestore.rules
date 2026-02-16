@@ -1,0 +1,29 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users collection
+    match /users/{userId} {
+      // Anyone authenticated can read all users (for leaderboard)
+      allow read: if request.auth != null;
+      // Users can only create/update their own profile
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+
+      // User's answers subcollection
+      match /answers/{answerId} {
+        allow read, create: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Questions collection
+    match /questions/{questionId} {
+      // Anyone authenticated can read questions
+      allow read: if request.auth != null;
+      // Anyone authenticated can create questions
+      allow create: if request.auth != null;
+      // Anyone authenticated can update (for ratings and timesAnswered)
+      allow update: if request.auth != null;
+    }
+  }
+}
