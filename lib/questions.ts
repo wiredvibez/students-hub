@@ -17,7 +17,7 @@ import type { Question, UserAnswerLocal, LeaderboardEntry } from "./types";
 
 /**
  * Fetch all valid (non-hidden) questions.
- * Hidden = avgRating <= 3 AND ratings.length > 3
+ * Hidden = avgRating <= 3 AND ratings.length >= 3
  */
 export async function fetchAllQuestions(): Promise<Question[]> {
   const snapshot = await getDocs(collection(getAppDb(), "questions"));
@@ -37,7 +37,7 @@ export async function fetchAllQuestions(): Promise<Question[]> {
       avgRating: data.avgRating || 5,
     };
 
-    const isHidden = q.avgRating <= 3 && q.ratings.length > 3;
+    const isHidden = q.avgRating <= 3 && q.ratings.length >= 3;
     if (!isHidden) {
       questions.push(q);
     }

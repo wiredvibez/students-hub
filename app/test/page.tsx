@@ -253,27 +253,32 @@ function TestPage() {
       </div>
 
       {/* Top info */}
-      <div className="flex items-center justify-between px-3 py-2 border-b-3 border-brutal-black bg-white">
+      <div className="relative flex items-center justify-between px-3 py-2 border-b-3 border-brutal-black bg-white">
         <button
           onClick={() => router.push("/")}
           className="text-xs font-bold text-brutal-grey hover:text-brutal-red transition-colors"
         >
           ← יציאה
         </button>
-        <div className="flex items-center gap-2">
-          {question.ratings.length > 0 && (
-            <span className="text-xs text-brutal-grey flex items-center gap-1">
-              <span className="text-brutal-red">★</span>
+
+        {question.ratings.length > 0 && (
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+            <span className="text-brutal-red text-base">★</span>
+            <span className="font-black text-sm tabular-nums">
               {question.avgRating.toFixed(1)}
             </span>
-          )}
-          <span className="font-black text-sm tabular-nums">
-            {currentIndex + 1}
-            <span className="text-brutal-grey font-normal">
-              /{questions.length}
+            <span className="text-[10px] text-brutal-grey">
+              ({question.ratings.length})
             </span>
+          </div>
+        )}
+
+        <span className="font-black text-sm tabular-nums">
+          {currentIndex + 1}
+          <span className="text-brutal-grey font-normal">
+            /{questions.length}
           </span>
-        </div>
+        </span>
       </div>
 
       {/* Question Content */}
