@@ -19,6 +19,7 @@ export interface UserProfile {
   createdAt: Timestamp;
   totalAnswered: number;
   totalCorrect: number;
+  totalQuestionsAdded: number;
 }
 
 export interface UserAnswer {

@@ -93,38 +93,35 @@ function HomePage() {
           </motion.button>
         </div>
 
+        {/* Decorative line - mobile only */}
         {showLeaderboard && (
-          <>
-            {/* Decorative line - mobile only */}
-            <div className="w-full max-w-md flex items-center gap-4 md:hidden">
-              <div className="flex-1 h-[3px] bg-brutal-black" />
-              <span className="font-display text-sm text-brutal-grey">
-                לוח תוצאות
-              </span>
-              <div className="flex-1 h-[3px] bg-brutal-black" />
-            </div>
-
-            {/* Vertical divider - desktop only */}
-            <div className="hidden md:block w-[3px] bg-brutal-black self-stretch" />
-
-            {/* Leaderboard */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-              className="w-full max-w-md md:flex-1 md:max-w-none md:flex md:flex-col md:justify-center"
-            >
-              <Leaderboard onVisibilityChange={setShowLeaderboard} />
-            </motion.div>
-          </>
-        )}
-
-        {/* Hidden mount for leaderboard data fetch when not yet visible */}
-        {!showLeaderboard && (
-          <div className="hidden">
-            <Leaderboard onVisibilityChange={setShowLeaderboard} />
+          <div className="w-full max-w-md flex items-center gap-4 md:hidden">
+            <div className="flex-1 h-[3px] bg-brutal-black" />
+            <span className="font-display text-sm text-brutal-grey">
+              לוח תוצאות
+            </span>
+            <div className="flex-1 h-[3px] bg-brutal-black" />
           </div>
         )}
+
+        {/* Vertical divider - desktop only */}
+        {showLeaderboard && (
+          <div className="hidden md:block w-[3px] bg-brutal-black self-stretch" />
+        )}
+
+        {/* Single Leaderboard instance — always mounted so it never re-fetches */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: showLeaderboard ? 1 : 0, y: showLeaderboard ? 0 : 20 }}
+          transition={{ delay: showLeaderboard ? 0.4 : 0, duration: 0.5 }}
+          className={
+            showLeaderboard
+              ? "w-full max-w-md md:flex-1 md:max-w-none md:flex md:flex-col md:justify-center"
+              : "hidden"
+          }
+        >
+          <Leaderboard onVisibilityChange={setShowLeaderboard} />
+        </motion.div>
       </div>
 
       {/* Footer */}

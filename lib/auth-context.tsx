@@ -82,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       createdAt: serverTimestamp(),
       totalAnswered: 0,
       totalCorrect: 0,
+      totalQuestionsAdded: 0,
     });
     const freshDoc = await getDoc(userDocRef);
     setProfile(freshDoc.data() as UserProfile);

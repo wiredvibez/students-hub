@@ -196,6 +196,11 @@ export async function addQuestionsBatch(
     });
   }
 
+  const userRef = doc(db, "users", createdBy);
+  batch.update(userRef, {
+    totalQuestionsAdded: increment(questions.length),
+  });
+
   await batch.commit();
   return questions.length;
 }
