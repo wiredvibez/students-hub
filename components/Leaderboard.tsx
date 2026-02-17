@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { subscribeLeaderboard } from "@/lib/questions";
+import { fetchLeaderboard } from "@/lib/questions";
 import type { LeaderboardEntry } from "@/lib/types";
 
 const MIN_ENTRIES = 3;
@@ -57,16 +57,28 @@ function SparkleParticles({ particles }: { particles: Particle[] }) {
   );
 }
 
+/* ---------- Format time as HH:MM ---------- */
+
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString("he-IL", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 /* ---------- Leaderboard ---------- */
 
 export default function Leaderboard({ onVisibilityChange }: LeaderboardProps) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [updatedUids, setUpdatedUids] = useState<Set<string>>(new Set());
   const [particles, setParticles] = useState<Particle[]>([]);
   const prevEntriesRef = useRef<Map<string, number>>(new Map());
   const rowRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
-  const isFirstSnapshot = useRef(true);
+  const isFirstFetch = useRef(true);
 
   const spawnSparkles = useCallback((el: HTMLDivElement) => {
     const rect = el.getBoundingClientRect();
@@ -89,15 +101,18 @@ export default function Leaderboard({ onVisibilityChange }: LeaderboardProps) {
     }, 2200);
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = subscribeLeaderboard((newEntries) => {
-      if (isFirstSnapshot.current) {
-        isFirstSnapshot.current = false;
+  const loadLeaderboard = useCallback(async () => {
+    try {
+      const newEntries = await fetchLeaderboard();
+
+      if (isFirstFetch.current) {
+        isFirstFetch.current = false;
         const map = new Map<string, number>();
         newEntries.forEach((e) => map.set(e.uid, e.totalAnswered));
         prevEntriesRef.current = map;
         setEntries(newEntries);
         setLoading(false);
+        setLastUpdated(new Date());
         return;
       }
 
@@ -116,6 +131,7 @@ export default function Leaderboard({ onVisibilityChange }: LeaderboardProps) {
       prevEntriesRef.current = nextMap;
 
       setEntries(newEntries);
+      setLastUpdated(new Date());
 
       if (changed.size > 0) {
         setUpdatedUids(changed);
@@ -129,10 +145,22 @@ export default function Leaderboard({ onVisibilityChange }: LeaderboardProps) {
 
         setTimeout(() => setUpdatedUids(new Set()), 1500);
       }
-    });
-
-    return unsubscribe;
+    } catch (error) {
+      console.error("Failed to fetch leaderboard:", error);
+    }
   }, [spawnSparkles]);
+
+  const handleRefresh = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    await loadLeaderboard();
+    setRefreshing(false);
+  }, [refreshing, loadLeaderboard]);
+
+  // Initial fetch on mount
+  useEffect(() => {
+    loadLeaderboard();
+  }, [loadLeaderboard]);
 
   const visible = !loading && entries.length >= MIN_ENTRIES;
 
@@ -147,6 +175,36 @@ export default function Leaderboard({ onVisibilityChange }: LeaderboardProps) {
       <SparkleParticles particles={particles} />
 
       <div className="brutal-card overflow-hidden">
+        {/* Refresh bar */}
+        <div className="bg-brutal-white border-b-2 border-brutal-black px-4 py-2 flex items-center justify-between">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-1.5 text-brutal-grey hover:text-brutal-black transition-colors disabled:opacity-50"
+            aria-label="רענן נתונים"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+            >
+              <path
+                fillRule="evenodd"
+                d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H3.989a.75.75 0 0 0-.75.75v4.242a.75.75 0 0 0 1.5 0v-2.43l.31.31a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.449-.39Zm1.23-3.723a.75.75 0 0 0 .219-.53V2.929a.75.75 0 0 0-1.5 0v2.43l-.31-.31A7 7 0 0 0 3.239 8.188a.75.75 0 1 0 1.448.389 5.5 5.5 0 0 1 9.202-2.466l.311.311H11.77a.75.75 0 0 0 0 1.5h4.243a.75.75 0 0 0 .53-.22Z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span className="text-xs font-medium">רענן</span>
+          </button>
+
+          {lastUpdated && (
+            <span className="text-xs text-brutal-grey">
+              עודכן בשעה {formatTime(lastUpdated)}
+            </span>
+          )}
+        </div>
+
         {/* Header */}
         <div className="bg-brutal-black text-brutal-white px-4 py-3 flex items-center justify-between">
           <h3 className="font-display text-lg">לוח תוצאות</h3>
