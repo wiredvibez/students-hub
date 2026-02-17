@@ -6,6 +6,7 @@ import {
   getCountFromServer,
   addDoc,
   updateDoc,
+  deleteDoc,
   writeBatch,
   runTransaction,
   serverTimestamp,
@@ -269,4 +270,75 @@ export function subscribeLeaderboard(
     entries.sort((a, b) => b.totalAnswered - a.totalAnswered);
     callback(entries);
   });
+}
+
+// ================== Admin Functions ==================
+
+/**
+ * Fetch ALL questions for admin view (including hidden ones).
+ */
+export async function fetchAllQuestionsAdmin(): Promise<Question[]> {
+  const snapshot = await getDocs(collection(getAppDb(), "questions"));
+  const questions: Question[] = [];
+
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+    questions.push({
+      id: docSnap.id,
+      question: data.question,
+      options: data.options,
+      correctAnswerIndex: data.correctAnswerIndex,
+      createdAt: data.createdAt,
+      createdBy: data.createdBy || "",
+      timesAnswered: data.timesAnswered || 0,
+      ratings: data.ratings || [],
+      avgRating: data.avgRating || 5,
+    });
+  });
+
+  // Sort by createdAt descending (newest first)
+  questions.sort((a, b) => {
+    const aTime = a.createdAt?.toMillis?.() || 0;
+    const bTime = b.createdAt?.toMillis?.() || 0;
+    return bTime - aTime;
+  });
+
+  return questions;
+}
+
+/**
+ * Delete a question from the database (admin only).
+ */
+export async function deleteQuestion(questionId: string): Promise<void> {
+  await deleteDoc(doc(getAppDb(), "questions", questionId));
+}
+
+/**
+ * Get a user's display name by their UID.
+ */
+export async function getUserDisplayName(uid: string): Promise<string> {
+  if (!uid) return "???";
+  const userDoc = await getDoc(doc(getAppDb(), "users", uid));
+  if (userDoc.exists()) {
+    return userDoc.data().displayName || "???";
+  }
+  return "???";
+}
+
+/**
+ * Get display names for multiple UIDs (batched for efficiency).
+ */
+export async function getUserDisplayNames(
+  uids: string[]
+): Promise<Record<string, string>> {
+  const uniqueUids = [...new Set(uids.filter(Boolean))];
+  const names: Record<string, string> = {};
+
+  await Promise.all(
+    uniqueUids.map(async (uid) => {
+      names[uid] = await getUserDisplayName(uid);
+    })
+  );
+
+  return names;
 }

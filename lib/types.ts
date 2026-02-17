@@ -20,6 +20,7 @@ export interface UserProfile {
   totalAnswered: number;
   totalCorrect: number;
   totalQuestionsAdded: number;
+  admin?: boolean;
 }
 
 export interface UserAnswer {

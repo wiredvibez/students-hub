@@ -3,6 +3,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Helper function to check if current user is admin
+    function isAdmin() {
+      return request.auth != null 
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true;
+    }
+
     // Users collection
     match /users/{userId} {
       // Anyone authenticated can read all users (for leaderboard)
@@ -26,6 +33,8 @@ service cloud.firestore {
       allow update: if request.auth != null
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(["ratings", "avgRating", "timesAnswered"]);
+      // Only admins can delete questions
+      allow delete: if isAdmin();
     }
   }
 }
