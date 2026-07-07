@@ -31,10 +31,10 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
         >
           <div>
             <h1 className="font-display text-4xl md:text-5xl leading-tight mb-3">
-              התנהגות ארגונית
+              מבוא למדעי הנתונים
             </h1>
             <h2 className="font-display text-3xl md:text-4xl text-brutal-red">
-              מיקרו
+              לניהול
             </h2>
           </div>
 
