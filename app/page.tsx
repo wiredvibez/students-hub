@@ -27,7 +27,7 @@ function HomePage() {
     <div className="min-h-dvh flex flex-col">
       {/* Top Bar */}
       <div className="flex items-center justify-between gap-2 px-2 py-2 md:p-4 border-b-3 border-brutal-black bg-white">
-        <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
+        <div className="flex flex-wrap items-center gap-1.5 md:gap-2 min-w-0">
           <button
             onClick={() => router.push("/add")}
             className="brutal-btn text-xs px-2 py-1 md:text-sm md:px-4 md:py-2 whitespace-nowrap"
@@ -40,6 +40,14 @@ function HomePage() {
           >
             ההסברים שלי
           </button>
+          {profile?.admin && (
+            <button
+              onClick={() => router.push("/admin/questions")}
+              className="brutal-btn-red text-xs px-2 py-1 md:text-sm md:px-4 md:py-2 whitespace-nowrap"
+            >
+              ניהול שאלות
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-brutal-grey shrink-0">
           <span className="truncate max-w-[4.5rem] md:max-w-none">
