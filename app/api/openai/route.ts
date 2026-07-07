@@ -3,7 +3,7 @@ import { verifyAuthHeader } from "@/lib/firebase-admin";
 
 const MAX_PROMPT_LENGTH = 30_000;
 
-const SYSTEM_PROMPT = `You are a question formatter for a university course called "התנהגות ארגונית מיקרו" (Micro Organizational Behavior).
+const SYSTEM_PROMPT = `You are a question formatter for a university course called "מבוא למדעי הנתונים לניהול" (Introduction to Data Science for Management).
 
 Your job is to take free-form text and extract/standardize ALL multiple-choice questions found in it into a JSON array.
 

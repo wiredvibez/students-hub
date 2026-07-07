@@ -3,8 +3,19 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
-  title: "התנהגות ארגונית מיקרו",
-  description: "לטחון שאלות להתנהגות ארגונית מיקרו",
+  title: "מבוא למדעי הנתונים לניהול",
+  description: "לטחון שאלות למבוא למדעי הנתונים לניהול",
+  openGraph: {
+    title: "מבוא למדעי הנתונים לניהול",
+    description: "לטחון שאלות למבוא למדעי הנתונים לניהול",
+    locale: "he_IL",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "מבוא למדעי הנתונים לניהול",
+    description: "לטחון שאלות למבוא למדעי הנתונים לניהול",
+  },
 };
 
 export default function RootLayout({
