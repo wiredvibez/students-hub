@@ -9,6 +9,7 @@ Your job is to take free-form text and extract/standardize ALL multiple-choice q
 
 Rules:
 - Extract EVERY question you can identify from the text.
+- The input may include markdown-style emphasis: **text** means that text was bold in the source document (often the correct answer, a key term, or important emphasis). Use ** markers as a strong hint when choosing correctAnswerIndex and cleaning wording, but do NOT include ** in the output question or option strings.
 - Each question must be in Hebrew.
 - CRITICAL: Preserve the EXACT number of options each question has. If a question has 5 options (א–ה), output 5 options. If it has 3, output 3. Do NOT add or remove options. Only when generating new questions from topics/concepts, default to 4.
 - One option must be correct (correctAnswerIndex is 0-based).

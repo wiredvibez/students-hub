@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="he" dir="rtl">
+    <html lang="he" dir="rtl" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -30,7 +30,10 @@ export default function RootLayout({
           content="width=device-width, initial-scale=1, maximum-scale=1"
         />
       </head>
-      <body className="font-body bg-brutal-paper text-brutal-black min-h-dvh">
+      <body
+        suppressHydrationWarning
+        className="font-body bg-brutal-paper text-brutal-black min-h-dvh"
+      >
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

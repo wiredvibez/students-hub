@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import AuthGuard from "@/components/AuthGuard";
 import { addQuestionsBatch } from "@/lib/questions";
 import { getAppAuth } from "@/lib/firebase";
+import { convertRichPasteToMarkdown } from "@/lib/paste-markdown";
 
 const LETTERS = ["א", "ב", "ג", "ד", "ה", "ו", "ז", "ח"];
 
@@ -210,6 +211,26 @@ function AddQuestionPage() {
     setSaveResult(null);
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const html = e.clipboardData.getData("text/html");
+    const plain = e.clipboardData.getData("text/plain");
+    const converted = convertRichPasteToMarkdown(html, plain);
+    if (!converted) return;
+
+    e.preventDefault();
+    const textarea = e.currentTarget;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const nextValue = freeText.slice(0, start) + converted + freeText.slice(end);
+    setFreeText(nextValue);
+
+    const cursor = start + converted.length;
+    requestAnimationFrame(() => {
+      textarea.selectionStart = cursor;
+      textarea.selectionEnd = cursor;
+    });
+  };
+
   return (
     <div className="min-h-dvh bg-brutal-paper flex flex-col">
       {/* Header */}
@@ -239,13 +260,16 @@ function AddQuestionPage() {
                   הדביקו טקסט חופשי עם שאלות — ה-AI יזהה ויסדר את כולן
                 </p>
                 <p className="text-xs text-brutal-grey/60">
-                  אפשר שאלה אחת או עשרים, בכל פורמט, והוא יסדר הכל
+                  אפשר שאלה אחת או עשרים, בכל פורמט. הדגשה מ-Word (מודגש) נשמרת
+                  כ-<span className="font-mono">**טקסט**</span> כדי שה-AI יזהה תשובות
+                  נכונות ומונחים חשובים
                 </p>
               </div>
 
               <textarea
                 value={freeText}
                 onChange={(e) => setFreeText(e.target.value)}
+                onPaste={handlePaste}
                 placeholder="הדביקו כאן שאלות..."
                 rows={10}
                 className="w-full p-4 brutal-border bg-white font-body text-base

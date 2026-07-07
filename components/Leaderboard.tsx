@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { fetchLeaderboard } from "@/lib/questions";
 import type { LeaderboardEntry } from "@/lib/types";
 
-const MIN_ENTRIES = 3;
+const MIN_ENTRIES = 5;
 const SPARKLE_COUNT = 12;
 
 interface LeaderboardProps {

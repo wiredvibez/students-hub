@@ -15,6 +15,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { getAppDb } from "./firebase";
+import { QUESTION_BATCH_SIZE } from "./config";
 import type { Question, UserAnswerLocal, LeaderboardEntry } from "./types";
 
 /**
@@ -69,7 +70,7 @@ export async function getUserAnsweredIds(uid: string): Promise<Set<string>> {
  */
 export async function getNextBatch(
   uid: string,
-  batchSize: number = 20
+  batchSize: number = QUESTION_BATCH_SIZE
 ): Promise<Question[]> {
   const [allQuestions, answeredIds] = await Promise.all([
     fetchAllQuestions(),

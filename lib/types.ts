@@ -32,11 +32,14 @@ export interface UserAnswer {
   rating?: number; // 1-5
 }
 
+export type TestMode = "batch" | "practice";
+
 export interface TestSession {
   questions: Question[];
   answers: (UserAnswerLocal | null)[];
   currentIndex: number;
-  state: "loading" | "testing" | "review";
+  mode: TestMode;
+  state: "loading" | "testing" | "feedback" | "review";
 }
 
 export interface UserAnswerLocal {
@@ -52,4 +55,26 @@ export interface LeaderboardEntry {
   uid: string;
   displayName: string;
   totalAnswered: number;
+}
+
+export const MAX_NOTE_LENGTH = 500;
+
+export interface QuestionNote {
+  id: string; // same as createdBy uid
+  questionId: string;
+  text: string;
+  createdBy: string;
+  displayName: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  score: number;
+  upvotes: number;
+  downvotes: number;
+}
+
+export type NoteVoteValue = 1 | -1;
+
+export interface UserNoteWithQuestion {
+  note: QuestionNote;
+  questionText: string;
 }

@@ -13,7 +13,7 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "firebase/firestore";
 import { getAppAuth, getAppDb, googleProvider } from "./firebase";
 import type { UserProfile } from "./types";
 
@@ -36,23 +36,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [needsDisplayName, setNeedsDisplayName] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(getAppAuth(), async (firebaseUser) => {
+    let profileUnsub: (() => void) | undefined;
+
+    const unsub = onAuthStateChanged(getAppAuth(), (firebaseUser) => {
+      profileUnsub?.();
+      profileUnsub = undefined;
+
       setUser(firebaseUser);
       if (firebaseUser) {
-        const profileDoc = await getDoc(doc(getAppDb(), "users", firebaseUser.uid));
-        if (profileDoc.exists()) {
-          setProfile(profileDoc.data() as UserProfile);
-          setNeedsDisplayName(false);
-        } else {
-          setNeedsDisplayName(true);
-        }
+        profileUnsub = onSnapshot(
+          doc(getAppDb(), "users", firebaseUser.uid),
+          (profileDoc) => {
+            if (profileDoc.exists()) {
+              setProfile(profileDoc.data() as UserProfile);
+              setNeedsDisplayName(false);
+            } else {
+              setProfile(null);
+              setNeedsDisplayName(true);
+            }
+            setLoading(false);
+          },
+          (err) => {
+            console.error("Failed to subscribe to profile:", err);
+            setLoading(false);
+          }
+        );
       } else {
         setProfile(null);
         setNeedsDisplayName(false);
+        setLoading(false);
       }
-      setLoading(false);
     });
-    return () => unsub();
+
+    return () => {
+      profileUnsub?.();
+      unsub();
+    };
   }, []);
 
   const signInWithGoogle = async () => {

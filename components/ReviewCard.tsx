@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import RatingStars from "./RatingStars";
+import QuestionNotes from "./QuestionNotes";
 import type { Question, UserAnswerLocal } from "@/lib/types";
 
 const LETTERS = ["א", "ב", "ג", "ד", "ה", "ו", "ז", "ח"];
@@ -99,6 +100,8 @@ export default function ReviewCard({
           size="sm"
         />
       </div>
+
+      <QuestionNotes questionId={question.id} />
     </motion.div>
   );
 }

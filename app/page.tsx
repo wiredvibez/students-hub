@@ -26,21 +26,31 @@ function HomePage() {
   return (
     <div className="min-h-dvh flex flex-col">
       {/* Top Bar */}
-      <div className="flex items-center justify-between p-4 border-b-3 border-brutal-black bg-white">
-        <button
-          onClick={() => router.push("/add")}
-          className="brutal-btn text-sm px-4 py-2"
-        >
-          + הוסף שאלה
-        </button>
-        <div className="flex items-center gap-2 text-sm text-brutal-grey">
-          <span>{profile?.displayName}</span>
-          <span>|</span>
+      <div className="flex items-center justify-between gap-2 px-2 py-2 md:p-4 border-b-3 border-brutal-black bg-white">
+        <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
+          <button
+            onClick={() => router.push("/add")}
+            className="brutal-btn text-xs px-2 py-1 md:text-sm md:px-4 md:py-2 whitespace-nowrap"
+          >
+            + הוסף שאלה
+          </button>
+          <button
+            onClick={() => router.push("/notes")}
+            className="brutal-btn text-xs px-2 py-1 md:text-sm md:px-4 md:py-2 whitespace-nowrap"
+          >
+            ההסברים שלי
+          </button>
+        </div>
+        <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-brutal-grey shrink-0">
+          <span className="truncate max-w-[4.5rem] md:max-w-none">
+            {profile?.displayName}
+          </span>
+          <span className="hidden sm:inline">|</span>
           <button
             onClick={signOut}
-            className="hover:text-brutal-red transition-colors"
+            className="hover:text-brutal-red transition-colors whitespace-nowrap"
           >
-            מפה יוצאים
+            התנתקות
           </button>
         </div>
       </div>
@@ -99,11 +109,11 @@ function HomePage() {
             className="text-center mb-12"
           >
             <h1 className="font-display text-5xl md:text-7xl leading-[1.1] mb-2">
-              התנהגות ארגונית
+              מבוא למדעי הנתונים
             </h1>
             <div className="relative inline-block">
               <h2 className="font-display text-4xl md:text-6xl text-brutal-red">
-                מיקרו
+                לניהול
               </h2>
               <div className="absolute -bottom-2 left-0 right-0 h-[3px] bg-brutal-red" />
             </div>
@@ -123,20 +133,61 @@ function HomePage() {
             </motion.p>
           )}
 
-          <motion.button
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => router.push("/test")}
-            className="brutal-btn-red text-2xl md:text-3xl font-display
-                       px-12 py-6 md:px-16 md:py-8
-                       shadow-brutal-lg
-                       hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
-          >
-            לטחון שאלות
-          </motion.button>
+          <div className="flex flex-col items-center gap-4 w-full max-w-md">
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => router.push("/test")}
+              className="brutal-btn-red text-2xl md:text-3xl font-display
+                         w-full px-12 py-6 md:px-16 md:py-8
+                         shadow-brutal-lg
+                         hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
+            >
+              לטחון שאלות
+            </motion.button>
+
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => router.push("/test?mode=practice")}
+              className="brutal-btn text-lg md:text-xl font-display
+                         w-full px-8 py-4 md:px-12 md:py-5
+                         shadow-brutal
+                         hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+            >
+              תרגול שאלה שאלה
+            </motion.button>
+
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.35, duration: 0.4 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => router.push("/add")}
+              className="brutal-btn text-base md:text-lg font-display
+                         w-full px-8 py-3 md:px-12 md:py-4
+                         shadow-brutal-sm
+                         hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+            >
+              + הוסף שאלה
+            </motion.button>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.4 }}
+              className="text-xs text-brutal-grey text-center leading-relaxed"
+            >
+              מצב מבחן: 10 שאלות, סיכום בסוף · מצב תרגול: משוב מיידי אחרי כל תשובה
+            </motion.p>
+          </div>
         </div>
 
         {/* Decorative line - mobile only */}
